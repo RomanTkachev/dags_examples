@@ -1,0 +1,19 @@
+#local environments
+.env
+
+# SQL sessions 
+*.sql
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Editor/OS
+.vscode/
+.idea/
+*.iml
+.DS_Store
+Thumbs.db

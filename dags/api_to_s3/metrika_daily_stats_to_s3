@@ -1,0 +1,39 @@
+from airflow import DAG
+from airflow.operators.python import PythonOperator
+from airflow.operators.empty import EmptyOperator
+from datetime import datetime, timedelta
+
+from src.load_from_api import load_from_api
+from src.upload_to_s3 import upload_to_s3
+
+
+DEFAULT_ARGS = {
+    "owner": "not_so_bad",
+    "retries": 2, 
+    "retry_delay": 600,
+    "start_date": datetime(2026, 5, 14)
+}
+
+with DAG(
+    dag_id="not_so_bad_tkachev_API_to_S3__metrika",
+    tags=["not_so_bad", "metrika"],
+    schedule="@daily",
+    default_args=DEFAULT_ARGS,
+    max_active_runs=1,
+    max_active_tasks=1
+) as dag: 
+
+    dag_start = EmptyOperator(task_id="dag_start")
+    dag_end = EmptyOperator(task_id="dag_end")
+
+    load_from_api = PythonOperator(
+        task_id="load_from_api",
+        python_callable=load_from_api
+    )
+
+    upload_to_s3 = PythonOperator(
+        task_id="upload_to_s3",
+        python_callable=upload_to_s3
+    )
+
+    dag_start >> load_from_api >> upload_to_s3 >> dag_end
