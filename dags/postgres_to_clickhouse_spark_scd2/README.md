@@ -48,18 +48,6 @@ dag_start → load_from_postgres → apply_scd2 → upload_to_clickhouse → dag
 - `ALTER TABLE ... UPDATE` — закрытие старых версий (`effective_to`, `is_current = false`);
 - `INSERT` — новые версии в `users_history`.
 
-## Схема users_history (ClickHouse)
-
-| Поле | Тип | Описание |
-|---|---|---|
-| customer_key | BIGINT | Суррогатный ключ версии |
-| customer_id | STRING | Бизнес-ключ |
-| name | STRING | Имя |
-| city | STRING | Город |
-| phone | STRING | Телефон |
-| effective_from | DATE | Начало действия версии |
-| effective_to | DATE | Конец (`9999-12-31` для текущей) |
-| is_current | BOOLEAN | Признак текущей версии |
 
 ## Необходимая конфигурация
 
@@ -82,21 +70,6 @@ dag_start → load_from_postgres → apply_scd2 → upload_to_clickhouse → dag
 Перед первым запуском создайте таблицы — см. [`sql/create_tables.sql`](sql/create_tables.sql).
 
 INSERT и мутации выполняются в распределённую таблицу `users_history`.
-
-## Структура папки
-
-```
-postgres_to_clickhouse_spark_scd2/
-├── users_scd2_daily.py          # определение DAG
-├── src/
-│   ├── spark_session.py         # SparkSession
-│   ├── load_from_postgres.py    # выгрузка users из PostgreSQL
-│   ├── apply_scd2.py            # сравнение и расчёт изменений
-│   └── upload_to_clickhouse.py  # закрытие и вставка в ClickHouse
-├── sql/
-│   └── create_tables.sql
-└── README.md
-```
 
 ## Зависимости
 
