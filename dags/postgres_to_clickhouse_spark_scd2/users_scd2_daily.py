@@ -4,7 +4,8 @@ from airflow import DAG
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import PythonOperator
 
-from src.load_from_s3 import load_from_s3
+from src.apply_scd2 import apply_scd2
+from src.load_from_postgres import load_from_postgres
 from src.upload_to_clickhouse import upload_to_clickhouse
 
 
@@ -16,9 +17,9 @@ DEFAULT_ARGS = {
 }
 
 with DAG(
-    dag_id="not_so_bad_weekly_visits_to_clickhouse",
-    tags=["not_so_bad", "metrika", "clickhouse"],
-    schedule="0 6 * * 1",
+    dag_id="not_so_bad_users_scd2_to_clickhouse",
+    tags=["not_so_bad", "postgres", "spark", "clickhouse", "scd2"],
+    schedule="0 6 * * *",
     default_args=DEFAULT_ARGS,
     max_active_runs=1,
     max_active_tasks=1,
@@ -27,9 +28,14 @@ with DAG(
     dag_start = EmptyOperator(task_id="dag_start")
     dag_end = EmptyOperator(task_id="dag_end")
 
-    load_from_s3 = PythonOperator(
-        task_id="load_from_s3",
-        python_callable=load_from_s3,
+    load_from_postgres = PythonOperator(
+        task_id="load_from_postgres",
+        python_callable=load_from_postgres,
+    )
+
+    apply_scd2 = PythonOperator(
+        task_id="apply_scd2",
+        python_callable=apply_scd2,
     )
 
     upload_to_clickhouse = PythonOperator(
@@ -37,4 +43,5 @@ with DAG(
         python_callable=upload_to_clickhouse,
     )
 
-    dag_start >> load_from_s3 >> upload_to_clickhouse >> dag_end
+    dag_start >> load_from_postgres >> apply_scd2 >> upload_to_clickhouse >> dag_end
+    
