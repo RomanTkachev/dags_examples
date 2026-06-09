@@ -1,8 +1,8 @@
 #local environments
 .env
 
-# SQL sessions 
-*.sql
+# SQL sessions inside dags 
+dags/**/*.sql
 
 # Python cache
 __pycache__/
