@@ -2,7 +2,7 @@
 # 1. Получаем данные из API. Сохраняем в датафрейм. 
 # 2. Грузим датафрейм во временную таблицу temp_leads в postgre
 # 3. Делаем merge временной таблицы temp_leads в основную таблицу leads по id заявки.
-#    Новые заявки добавятся, заявки с апдейтами – обновятся, заявки без апдейта – останутся без изменений.
+#    Новые заявки добавятся, заявки с апдейтами – обновятся, заявки, которых нет в источнике – удалятся.
 # 4. Сносим временную таблицу temp_leads после успешного коммита.
 
 from airflow.hooks.base import BaseHook
@@ -48,11 +48,16 @@ def load_to_postgre (**context):
 
     df = pd.json_normalize(data) #делаем плоскую таблицу
 
+    if df.empty:
+        logger.error(f"Датафрейм пустой. Merge выполнять нельзя: очистится продовая таблица", exc_info=True)
+        raise
+
     logger.debug(f"Меняем типы данных")
+    df = df.replace({np.nan: None})
     df["PHONE"] = df["PHONE"].apply(lambda x: json.dumps(x))
     df["EMAIL"] = df["EMAIL"].apply(lambda x: json.dumps(x))
     df["ID"] = df['ID'].astype(int)
-    df = df.replace({np.nan: None})
+    
 
     logger.debug(f"Меняем названия колонок")
     df.rename(columns={
@@ -72,7 +77,7 @@ def load_to_postgre (**context):
     data_tuples = [tuple(row) for row in df.to_numpy()]
     logger.info(f"{len(data_tuples)} записей готовы для вставки")
 
-    connection = BaseHook.get_connection('conn_postgre')
+    connection = BaseHook.get_connection('conn_pg')
 
     with pg.connect(
         dbname=PG_DATABASE,
@@ -156,6 +161,4 @@ def load_to_postgre (**context):
                 exc_info=True
             )
             raise
-        finally:
-            conn.close()
 
