@@ -154,6 +154,8 @@ def load_to_postgre (**context):
             
                 conn.commit()
 
+                logger.info("Merge выполнен успешно")
+
         except Exception as e:
             conn.rollback()
             logger.error(

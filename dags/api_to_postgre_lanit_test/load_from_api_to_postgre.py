@@ -5,7 +5,7 @@ from airflow import DAG
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import PythonOperator 
 
-from src.load_to_postgre import load_to_postgre
+from api_to_postgre_lanit_test.src.load_to_postgre import load_to_postgre
 
 DEFAULT_ARGS = {
     "owner": "tkachev_roman",
